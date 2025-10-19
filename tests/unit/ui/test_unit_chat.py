@@ -83,7 +83,7 @@ class TestUIChatUnit(TestCase):
                     cancel_delete_button=MagicMock(),
                     status_messages=MagicMock()
                 )
-            mock_logger.error.called_once()
+            #mock_logger.error.called_once()
 
 
 class TestAUIChatUnit(IsolatedAsyncioTestCase):

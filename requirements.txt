@@ -1,0 +1,12 @@
+gradio
+gradio_modal
+ollama
+pymilvus==2.5.12
+langchain
+langchain-milvus
+langchain-community
+langchain-ollama
+langgraph
+aiosqlite
+unstructured
+markdown

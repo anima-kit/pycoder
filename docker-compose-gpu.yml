@@ -1,0 +1,205 @@
+#### docker-compose
+### Based on searxng/searxng-docker setup and Milvus docker setup
+### searxng/searxng-docker setup | https://github.com/searxng/searxng-docker
+### Original file | https://github.com/searxng/searxng-docker/blob/master/docker-compose.yaml
+### Milvus docker setup | https://github.com/milvus-io/milvus/releases/download/v2.6.2/milvus-standalone-docker-compose.yml
+
+### Ollama
+### Sets up an Ollama server to handle LM calls with GPU acceleration through port `localhost:11434`
+## This is the exact same file as `docker-compose-cpu` but with Ollama configured for GPU support
+
+### Milvus
+### Sets up a Milvus server with Etcd and MinIO servers for support in Docker containers.
+## 1. A Milvus server to handle vector database operations through port `localhost:19530`.
+## 2. An Etcd server for coordination and storage
+## 3. A MinIO server for data storage
+
+### SearXNG
+### Sets up a SearXNG server with Caddy and Redis/Valkey servers for support in Docker containers.
+## 1. A SearXNG server to handle web search capabilities through port `localhost:8080`
+## 2. A Caddy server to act as a reverse proxy for HTTPS handling and domain routing
+## 3. A Redis/Valkey server for caching search results - Using Valkey through Redis API
+
+### Creating networks
+networks: # This is where all containers can talk to each other
+  default:
+    name: code-assistant
+
+### Creating volumes
+volumes:
+  ollama_data:  # Ollama data
+  etcd-data:    # etcd data
+  minio-data:   # MinIO data
+  milvus-data:  # Milvus data
+  caddy-data:   # Caddy data
+  caddy-config: # Caddy config
+  valkey-data:  # Valkey data
+  searxng-data: # SearXNG data
+
+services:
+  ollama: ## Ollama container (GPU-enabled)
+    image: ollama/ollama
+    container_name: ollama
+    ports:  ## Allow external processes to access Ollama server here
+      - "127.0.0.1:11434:11434"       
+    ## Configure Ollama to use GPU
+    gpus: # Use all available GPUs
+      - device: all                                  
+    ## Store Ollama data in Docker volume
+    volumes:  
+      - ollama_data:/root/.ollama
+
+  etcd: # Etcd container
+    container_name: milvus-etcd
+    image: quay.io/coreos/etcd:v3.6.5
+    environment:
+      - ETCD_AUTO_COMPACTION_MODE=revision  # Automatically compacts data when needed
+      - ETCD_AUTO_COMPACTION_RETENTION=1000 # Keeps the last 1000 revisions of data
+      - ETCD_QUOTA_BACKEND_BYTES=4294967296 # Sets a limit on stored data size
+      - ETCD_SNAPSHOT_COUNT=50000           # Creates snapshots after this many writes
+    volumes:  # Mount Docker volume to map to necessary Etcd data
+      - etcd-data:/etcd
+    # Starts Etcd with additional startup settings for storage and to use port 2379
+    command: etcd -advertise-client-urls=http://etcd:2379 -listen-client-urls http://0.0.0.0:2379 --data-dir /etcd
+    healthcheck:  # Periodically check Etcd server health
+      test: ["CMD", "etcdctl", "endpoint", "health"]
+      interval: 30s # Check every 30s
+      timeout: 20s  # Fail if no response for 20s
+      retries: 3    # Try three more times before marking unhealthy
+
+  minio:  # MinIO container
+    container_name: milvus-minio
+    image: minio/minio:RELEASE.2024-12-18T13-15-44Z
+    environment:
+      MINIO_ACCESS_KEY: minioadmin  # Username for storage access
+      MINIO_SECRET_KEY: minioadmin  # Password for storage access
+    ports:
+      - "9001:9001" # Port used for web UI
+      - "9000:9000" # Port for data storage
+    volumes:  # Mount Docker volume to map to necessary MinIO data
+      - minio-data:/minio_data  
+      # Added extra volume here to prevent default Docker volume addition
+      - minio-data:/data  
+    # MinIO startup command with custom web UI settings
+    command: minio server /minio_data --console-address ":9001" 
+    healthcheck:  # Periodically check MinIO server health
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s 
+      timeout: 20s  
+      retries: 3   
+
+  standalone: # Milvus Standalone container
+    container_name: milvus-standalone
+    image: milvusdb/milvus:v2.6.2
+    # Run Milvus Standalone startup command
+    command: ["milvus", "run", "standalone"]
+    # Seems Milvus needs more lax security restrictions to work properly
+    security_opt:
+    - seccomp:unconfined
+    environment:
+      ETCD_ENDPOINTS: etcd:2379 # Point to Etcd server
+      MINIO_ADDRESS: minio:9000 # Point to MinIO server data storage port
+      # Set message queue type to use Woodpecker
+      MQ_TYPE: woodpecker       
+    volumes:  # Mount Docker volume to map to necessary Milvus data
+      - milvus-data:/var/lib/milvus
+    healthcheck:  # Periodically check Milvus server health
+      test: ["CMD", "curl", "-f", "http://localhost:9091/healthz"]
+      interval: 30s     
+      start_period: 90s # Wait 90s before starting first check
+      timeout: 20s      
+      retries: 3        
+    ports:  # Allow external processes to access Milvus server here
+      - "19530:19530" # Port for Milvus client API
+      - "9091:9091"   # Port used for health check and web UI
+    # Make sure Etcd and MinIO servers are working before starting Milvus server
+    depends_on:
+      - "etcd"
+      - "minio"
+
+  caddy: # Caddy container - Reverse proxy with HTTPS support
+    container_name: caddy
+    image: docker.io/library/caddy:2-alpine
+    ## Using host for the network mode ports Caddy directly to local machine's IP
+    network_mode: host        # Uses host network for easier port management
+    restart: unless-stopped   # Restart unless manually stopped (i.e. restart when unhealthy, etc.)
+    volumes:  # All Caddy data stored here
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro   # Custom Caddy configuration
+      - caddy-data:/data:rw                   # Persistent storage for Caddy data
+      - caddy-config:/config:rw               # Persistent storage for Caddy config
+    environment: # See .env.example file
+      - SEARXNG_HOSTNAME=${SEARXNG_HOSTNAME:-http://localhost}  # Base URL for SearXNG service - Defaults to localhost
+      - SEARXNG_TLS=${LETSENCRYPT_EMAIL:-internal}              # TLS configuration (optional) - Defaults to internal
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "1m"  # Limit log file size
+        max-file: "1"   # Keep only one log file
+    healthcheck:  # Make sure Caddy server is healthy
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost/healthz || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+
+  redis: # Redis container - Caching service (using Valkey as a drop-in replacement)
+    container_name: redis
+    image: docker.io/valkey/valkey:8-alpine                 # Valkey is a Redis-compatible fork
+    command: valkey-server --save 30 1 --loglevel warning   # Configuration parameters
+    restart: unless-stopped
+    networks: # Connect to custom network to talk with SearXNG
+      - default
+    volumes:  # All Redis data stored here
+      - valkey-data:/data  # Persistent storage for Redis data
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "1m"
+        max-file: "1"
+    healthcheck:  # Make sure Redis server is healthy
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+
+  searxng:  # SearXNG container - The search engine itself
+    container_name: searxng
+    image: docker.io/searxng/searxng:latest
+    restart: unless-stopped
+    networks: # Connect to custom network to talk with Valkey
+      - default
+    ports:  # Expose search engine on localhost:8080
+      - "127.0.0.1:8080:8080"  
+    volumes:  # All SearXNG data stored here
+      - ./searxng:/etc/searxng:rw           # Mount custom configuration
+      - searxng-data:/var/cache/searxng:rw  # Persistent storage for cache
+    environment:  
+      - SEARXNG_BASE_URL=https://${SEARXNG_HOSTNAME:-localhost}/  # Base URL for SearXNG service - Defaults to localhost
+      - SEARXNG_SECRET=${SEARXNG_SECRET:-ultrasecretkey}          # Secret key variable (see .env.example) - Defaults to ultrasecretkey
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "1m"
+        max-file: "1"
+    healthcheck:  # Make sure Searxng server is healthy
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:8080/healthz || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+
+## Lauren Street: 2025/10/18
+## Modifications compared to original SearXNG | https://github.com/searxng/searxng-docker/blob/master/docker-compose.yaml
+# 1. Removed deprecated 'version' argument
+# 2. Changed network name and valkey-data volume name
+# 3. Added secret key variable to searxng environment (see .env.example)
+# 4. Added health checks for containers
+# 5. Added lots of comments and attribution
+# 6. Added Ollama and Milvus containers
+## Modifications compared to original Milvus | https://github.com/milvus-io/milvus/releases/download/v2.6.2/milvus-standalone-docker-compose.yml
+# 1. Removed deprecated version argument
+# 2. Added Docker volumes instead of using local folders
+# 3. Added lots of comments and attribution
+# 4. Updated etcd version
+# 5. Added Ollama and SearXNG containers

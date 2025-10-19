@@ -1,0 +1,140 @@
+### Caddyfile
+## From searxng/searxng-docker setup | https://github.com/searxng/searxng-docker
+## Original file | https://github.com/searxng/searxng-docker/blob/master/Caddyfile
+
+# Sets up a Caddy proxy server that forwards traffic to SearXNG
+# Implements logging restrictions, header protection, and caching strategies 
+# Masks IPs and removes sensitive data from logs
+
+## This config makes the SearXNG server:
+# - Secure (blocks attacks, hides user data)
+# - Fast (compresses data, caches files)
+# - Private (masks IP addresses, removes sensitive logs)
+
+{
+	## Disable admin interface for production use
+	# Makes the setup simpler and more secure by removing unecessary potential attack points
+	admin off
+
+	## Configure log output with IP anonymization and data removal
+	# Logs requests but hides parts of user IP addresses
+	# Removes sensitive info like port numbers, headers (e.g., browser details), and search queries (q, h, etc.) from logs
+	# Prevents accidental exposure of user data in server logs
+	log {
+		output stderr
+		format filter {
+			# Mask first 8 bits of IPv4 (255.0.0.0) and 32 bits of IPv6 (1::/32)
+			request>remote_ip ip_mask 8 32
+			request>client_ip ip_mask 8 32
+
+			# Remove sensitive request data
+			request>remote_port delete
+			request>headers delete
+			request>uri query {
+				delete url
+				delete h
+				delete q
+			}
+		}
+	}
+
+	## Server configuration for client IP handling
+	# Trusts headers like X-Forwarded-For to get the real user IP when traffic goes through multiple servers
+	# Only trusts internal networks for proxying
+	# Ensures accurate tracking of user IPs while blocking fake or malicious requests
+	servers {
+		# Trust X-Forwarded-For and X-Real-IP headers for client IP tracking
+		client_ip_headers X-Forwarded-For X-Real-IP
+
+		# Allow the following IP to passthrough the "X-Forwarded-*" headers to SearXNG
+		# https://caddyserver.com/docs/caddyfile/options#trusted-proxies
+		trusted_proxies static private_ranges
+		trusted_proxies_strict
+	}
+}
+
+## Uses environment variables to set the website domain and TLS certificate
+{$SEARXNG_HOSTNAME}	# Dynamic hostname
+tls {$SEARXNG_TLS}	# TLS configuration
+
+## Enable compression with Zstandard and Gzip for different content types
+# Speeds up page loads by reducing file sizes
+encode zstd gzip
+
+## API endpoint routing (config, health checks, stats)
+# Routes specific paths (like /config, /healthz) to handle API requests or health checks
+@api {
+	path /config
+	path /healthz
+	path /stats/errors
+	path /stats/checker
+}
+
+## Separates image and static file handling for better control
+# Improves organization and performance by managing different types of traffic
+# Static files route for caching optimization
+@static {
+	path /static/*
+}
+# Image proxy route for handling image requests
+@imageproxy {
+	path /image_proxy
+}
+
+## Security headers configuration
+# Blocks malicious scripts by restricting what content can run
+# Prevents browsers from guessing file types or sharing too much info with other sites
+# Hides server details to avoid targeting the backend
+header {
+	# Content Security Policy to prevent XSS and other attacks
+	Content-Security-Policy "upgrade-insecure-requests; default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; form-action 'self' https:; font-src 'self'; frame-ancestors 'self'; base-uri 'self'; connect-src 'self'; img-src * data:; frame-src https:;"
+
+	# Permissions policy to restrict browser features
+	Permissions-Policy "accelerometer=(),camera=(),geolocation=(),gyroscope=(),magnetometer=(),microphone=(),payment=(),usb=()"
+
+	# Referrer policy to control referer header behavior
+	Referrer-Policy "same-origin"
+
+	# Prevent MIME type sniffing for security
+	X-Content-Type-Options "nosniff"
+
+	# Control search engine indexing behavior
+	X-Robots-Tag "noindex, nofollow, noarchive, nositelinkssearchbox, nosnippet, notranslate, noimageindex"
+
+	# enable HSTS
+	# WARNING: Once this value is set, the site must continue to support HTTPS until the expiry time is reached.
+
+	# Strict-Transport-Security max-age=15768000;
+
+	# Remove server header to obscure backend details
+	-Server
+}
+# API-specific CORS configuration for cross-origin requests
+header @api {
+	Access-Control-Allow-Methods "GET, OPTIONS"
+	Access-Control-Allow-Origin "*"
+}
+
+## Caching strategy for different routes
+# Tells browsers to cache static files for up to 1 year
+# Avoids checking for updates if the file name doesn’t change
+route {
+	# General cache control policy
+	header Cache-Control "no-cache"
+
+	# Image proxy caching
+	header @imageproxy Cache-Control "public, max-age=3600"
+
+	# Static files caching
+	header @static Cache-Control "public, max-age=30, stale-while-revalidate=60"
+}
+
+## Reverse proxy to SearXNG backend service
+# Forwards all traffic to SearXNG, which runs on localhost:8080
+reverse_proxy localhost:8080
+
+
+
+## Lauren Street: 2025/09/12
+## Modifications compared to original | https://github.com/searxng/searxng-docker/blob/master/Caddyfile
+# 1. Just added lots of comments and attribution

@@ -1,0 +1,32 @@
+### settings
+## Add additional settings beyond the default for searXNG server
+## Based on searxng/searxng-docker setup | https://github.com/searxng/searxng-docker
+## Original file | https://github.com/searxng/searxng-docker/blob/master/searxng/settings.yml
+
+## Use default settings
+# See original settings at https://github.com/searxng/searxng/blob/master/searx/settings.yml
+# see https://docs.searxng.org/admin/settings/settings.html#settings-use-default-settings
+use_default_settings: true
+
+server:
+  # enable this when running the instance for a public usage on the internet
+  limiter: false  
+  image_proxy: true
+
+## NOTE: Get deprecation warning when using following code from https://github.com/searxng/searxng-docker
+#/usr/local/searxng/searx/valkeydb.py:41: DeprecationWarning: setting redis.url is deprecated, use valkey.url
+redis:
+  url: redis://redis:6379/0
+
+# Need json format for setup with LangChain
+search:
+  formats:
+    - html
+    - json
+
+
+## Lauren Street: 2025/09/12
+## Modifications compared to original | https://github.com/searxng/searxng-docker/blob/master/searxng/settings.yml
+# 1. Moved secret key setup to .env.example file (to be copied to .env file)
+# 2. Added json format for search to work with LangChain's SearxSearchWrapper
+# 3. Added more commments and attribution

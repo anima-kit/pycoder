@@ -125,6 +125,8 @@ Now, let's get building!
 
 After setting everything up, you can now use the web UI to manage user profiles and codebases and to chat with agents about your documents. 
 
+You can use different LLMs and embedding models for your documents by adding the model and selecting it in the `.env` file. Any model you choose must be available in the [Ollama library][ollama-library]. By default, [Qwen AI's][qwen-ai] Qwen3 8b model is used for the LLM and a popular code model by [Jina AI][jina-ai] is used for the embedding. The 8b LLM works enough to be able to use the provided tools and answer somewhat complex questions, but I've found the 30b model which is commented out in the `.env` file to work significantly better. 
+
 The web UI can be utilized to manage different user profiles and codebases by uploading Python or Markdown files. Each user profile can have main codebases for which the agent will have a document retrieval tool. The agent will have access to one main codebase at a time, i.e. the selected main codebase. So, main codebase docs aren't shared between different main codebases. 
 
 Each user can also have some number of external codebases which can be shared across agent sessions for different main codebases. The agent will have a document retrieval tool for each selected external codebase. The agent will also have access to a SearXNG metasearch tool to get up to date or unfamiliar info from the web.
@@ -140,6 +142,7 @@ After setting up, for example, you can run the main app, create a user, create a
 1.  Navigate to the `Docs/Codebase Details` tab and upload the README.md of this repo.
 1.  Navigate to the `Chats` tab and input a message to the agent: `Summarize my main docs`
 
+You can also add various external codebases and allow the agent to retrieve information from any of these external codebases while chatting about your main codebase. 
 
 ## 🛠️ Next Steps
 
@@ -251,6 +254,7 @@ The Docker setup for this repo is heavily based on the [searxng-docker][searxng-
 [etcd]: https://etcd.io/
 [gradio]: https://www.gradio.app/
 [gradio-modal]: https://pypi.org/project/gradio-modal/
+[jina-ai]: https://jina.ai/
 [langchain]: https://www.langchain.com/
 [langgraph]: https://www.langchain.com/langgraph/
 [license]: LICENSE
@@ -259,10 +263,12 @@ The Docker setup for this repo is heavily based on the [searxng-docker][searxng-
 [milvus-webui]: http://127.0.0.1:9091/webui/
 [minio]: https://www.min.io/
 [ollama]: https://ollama.com/
+[ollama-library]: https://ollama.com/library
 [ollama-python]: https://github.com/ollama/ollama-python/
 [ollama-url]: http://localhost:11434/
 [pymilvus]: https://github.com/milvus-io/pymilvus
 [python-markdown]: https://github.com/Python-Markdown/markdown
+[qwen-ai]: https://qwen.ai/home
 [redis]: https://redis.io/
 [searxng]: https://docs.searxng.org/
 [searxng-docker]: https://github.com/searxng/searxng-docker/tree/master

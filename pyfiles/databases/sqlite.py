@@ -11,7 +11,7 @@ from aiosqlite import (
     Cursor, 
     Row
 )
-from langchain.docstore.document import Document
+from langchain_classic.docstore.document import Document
 from typing import (
     List, 
     Dict, 

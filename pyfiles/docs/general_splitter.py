@@ -2,8 +2,8 @@
 ## This file creates a class for creating LangChain documents from free content (not Markdown or Python).
 
 ## External imports
-from langchain.schema import Document
-from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain_classic.schema import Document
+from langchain_classic.text_splitter import RecursiveCharacterTextSplitter
 from typing import List
 
 ## Internal imports

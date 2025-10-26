@@ -3,8 +3,8 @@
 
 ## External imports
 from os.path import basename
-from langchain.schema import Document
-from langchain.text_splitter import RecursiveCharacterTextSplitter 
+from langchain_classic.schema import Document
+from langchain_classic.text_splitter import RecursiveCharacterTextSplitter 
 from typing import List
 
 ## Internal imports

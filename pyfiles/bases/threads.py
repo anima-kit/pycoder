@@ -5,7 +5,7 @@
 from uuid import uuid4
 from json import loads
 from os.path import basename
-from langchain.docstore.document import Document
+from langchain_classic.docstore.document import Document
 from typing import Dict, Tuple, List
 
 ## Internal imports

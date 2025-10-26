@@ -1,7 +1,7 @@
 ## tests.unit.docs.test_unit_gen_splitter
 from unittest import TestCase
 from unittest.mock import patch, MagicMock
-from langchain.schema import Document
+from langchain_classic.schema import Document
 from pyfiles.docs.general_splitter import GeneralSplitter
 
 class TestGeneralSplitterUnit(TestCase):
@@ -29,7 +29,7 @@ class TestGeneralSplitterUnit(TestCase):
     def test_create_document_with_exception(self):
         """Test exception handling in _create_document method"""
         splitter = GeneralSplitter(self.source, self.content)
-        with patch('langchain.schema.Document.__init__') as mock_document_init:
+        with patch('langchain_classic.schema.Document.__init__') as mock_document_init:
             mock_document_init.side_effect = Exception("Document creation failed")
             with self.assertRaises(Exception):
                 splitter._create_document(self.content)
@@ -37,7 +37,7 @@ class TestGeneralSplitterUnit(TestCase):
     def test_split_success_with_content(self):
         """Test successful splitting with content"""
         splitter = GeneralSplitter(self.source, self.content, self.chunk_size)
-        with patch('langchain.text_splitter.RecursiveCharacterTextSplitter') as mock_splitter_class:
+        with patch('langchain_classic.text_splitter.RecursiveCharacterTextSplitter') as mock_splitter_class:
             mock_splitter_instance = MagicMock()
             mock_splitter_instance.split_documents.return_value = [
                 Document(page_content="chunk1", metadata={"source": self.source}),

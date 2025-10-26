@@ -13,7 +13,7 @@ from os.path import (
 )
 from uuid import uuid4
 from gradio import File
-from langchain.schema import Document
+from langchain_classic.schema import Document
 from langchain_community.document_loaders import (
     PythonLoader, 
     UnstructuredMarkdownLoader

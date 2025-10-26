@@ -4,7 +4,7 @@ import tempfile
 import os
 import aiosqlite
 from unittest.mock import patch, AsyncMock
-from langchain.docstore.document import Document
+from langchain_classic.docstore.document import Document
 from pyfiles.databases.sqlite import SQLiteDB
 
 class TestSQLiteUnit(TestCase):

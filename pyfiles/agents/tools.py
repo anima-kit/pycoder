@@ -11,7 +11,7 @@ from pydantic import BaseModel, Field
 from langchain_core.tools.simple import Tool
 from langchain_core.messages import SystemMessage
 from langchain_core.retrievers import BaseRetriever
-from langchain.tools.retriever import create_retriever_tool
+from langchain_classic.tools.retriever import create_retriever_tool
 from langchain_core.tools import StructuredTool
 from langchain_community.utilities import SearxSearchWrapper
 from langchain_milvus import Milvus

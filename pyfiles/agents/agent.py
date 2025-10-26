@@ -29,7 +29,7 @@ from langgraph.prebuilt import create_react_agent
 from langchain_core.messages import HumanMessage, ToolMessage, AIMessage, BaseMessage
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_core.runnables import RunnableConfig
-from langchain.schema import Document
+from langchain_classic.schema import Document
 from langchain_core.tools.simple import Tool
 from langchain_core.tools import StructuredTool
 from gradio import EditData

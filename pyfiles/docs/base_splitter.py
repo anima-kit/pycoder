@@ -3,7 +3,7 @@
 
 ## External imports
 from abc import ABC, abstractmethod
-from langchain.schema import Document
+from langchain_classic.schema import Document
 from typing import Dict, List, Any
 
 ## Internal imports

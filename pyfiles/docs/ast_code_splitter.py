@@ -16,11 +16,11 @@ from ast import (
     Assign,
     Str
 )
-from langchain.text_splitter import (
+from langchain_classic.text_splitter import (
     RecursiveCharacterTextSplitter,
     Language
 )
-from langchain.schema import Document
+from langchain_classic.schema import Document
 from typing import List, Dict, Any
 
 ## Internal imports

@@ -1,7 +1,7 @@
 ## tests.unit.bases.test_unit_codebases
 from unittest import TestCase, IsolatedAsyncioTestCase
 from unittest.mock import MagicMock, patch, AsyncMock
-from langchain.schema import Document
+from langchain_classic.schema import Document
 from pyfiles.bases.codebases import Codebases
 
 class TestCodebasesUnit(TestCase):

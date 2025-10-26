@@ -2,7 +2,7 @@
 from unittest import TestCase
 from unittest.mock import patch, MagicMock
 import ast
-from langchain.schema import Document
+from langchain_classic.schema import Document
 from pyfiles.docs.ast_code_splitter import ASTCodeSplitter 
 
 class TestPythonSplitterUnit(TestCase):

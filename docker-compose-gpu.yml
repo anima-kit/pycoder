@@ -51,7 +51,7 @@ services:
 
   etcd: # Etcd container
     container_name: milvus-etcd
-    image: quay.io/coreos/etcd:v3.6.5
+    image: quay.io/coreos/etcd:v3.6.6
     environment:
       - ETCD_AUTO_COMPACTION_MODE=revision  # Automatically compacts data when needed
       - ETCD_AUTO_COMPACTION_RETENTION=1000 # Keeps the last 1000 revisions of data

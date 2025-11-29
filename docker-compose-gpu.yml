@@ -90,7 +90,7 @@ services:
 
   standalone: # Milvus Standalone container
     container_name: milvus-standalone
-    image: milvusdb/milvus:v2.6.5
+    image: milvusdb/milvus:v2.6.6
     # Run Milvus Standalone startup command
     command: ["milvus", "run", "standalone"]
     # Seems Milvus needs more lax security restrictions to work properly

@@ -1,7 +1,7 @@
 gradio
 gradio_modal
 ollama
-pymilvus==2.5.12
+pymilvus==2.6.5
 langchain-classic
 langchain-milvus
 langchain-community

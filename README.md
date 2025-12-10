@@ -2,6 +2,10 @@
 
 # PyCoder
 
+This project was a way for me to learn how to create agent systems with LangChain/LangGraph, Docker, and Gradio. There's no roadmap for future features, and won't be maintained.
+
+You can [checkout tutorials here][tutorials] for concepts pertaining to building AI systems.
+
 ![image](https://anima-kit.github.io/pycoder/assets/pycoder.png)
 
 ## 🔖 About This Project 
